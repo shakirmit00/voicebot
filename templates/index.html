@@ -1,0 +1,54 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Jarvis Voice Assistant</title>
+    <script>
+        async function startChat() {
+            await fetch("/start", { method: "POST" });
+            document.getElementById("status").innerText = "🎙️ Listening...";
+        }
+
+        async function stopChat() {
+            await fetch("/stop", { method: "POST" });
+            document.getElementById("status").innerText = "🛑 Stopped";
+        }
+
+        async function refreshChat() {
+            const res = await fetch("/history");
+            const chat = await res.json();
+            const container = document.getElementById("chat-log");
+            container.innerHTML = "";
+            chat.forEach(msg => {
+                const p = document.createElement("p");
+                p.innerHTML = `<b>${msg.role}:</b> ${msg.content}`;
+                container.appendChild(p);
+            });
+        }
+
+        setInterval(refreshChat, 5000);
+    </script>
+	<script>
+async function fetchChat() {
+  const res = await fetch("/history");
+  const history = await res.json();
+  const chatDiv = document.getElementById("chat-log");
+  chatDiv.innerHTML = history.map(msg =>
+    `<div><b>${msg.role}:</b> ${msg.content}</div>`
+  ).join("");
+}
+
+// Fetch chat every 2 seconds
+setInterval(fetchChat, 2000);
+</script>
+
+</head>
+<body style="font-family:sans-serif">
+    <h1>🧠 Jarvis Assistant </h1>
+    <p id="status">Status: 🛑 Not Listening</p>
+    <button onclick="startChat()">Start Chat</button>
+    <button onclick="stopChat()">Stop Chat</button>
+    <hr>
+    <div id="chat-log" style="height: 300px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px;"></div>
+</body>
+</html>
