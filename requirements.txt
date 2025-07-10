@@ -1,5 +1,2 @@
 Flask
 requests
-pygame
-python-dotenv
-SpeechRecognition
