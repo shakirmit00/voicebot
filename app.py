@@ -1,11 +1,16 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_from_directory
 import requests
+import os
+import uuid
+from eleven_tts import generate_tts_audio
 
 app = Flask(__name__)
 
 WEBHOOK_URL = "https://shaileshk.app.n8n.cloud/webhook/voicebot2"
 chat_history = []
 listening = False
+AUDIO_DIR = "audio"
+os.makedirs(AUDIO_DIR, exist_ok=True)
 
 @app.route("/")
 def index():
@@ -25,7 +30,20 @@ def voice():
         print("❌ Error contacting webhook:", e)
         reply = "Sorry, I couldn't reach the server."
     chat_history.append({"role": "assistant", "content": reply})
-    return jsonify({"reply": reply})
+    # Generate TTS audio and save to file
+    audio_filename = f"{uuid.uuid4()}.mp3"
+    audio_path = os.path.join(AUDIO_DIR, audio_filename)
+    try:
+        generate_tts_audio(reply, audio_path)
+        audio_url = f"/audio/{audio_filename}"
+    except Exception as e:
+        print("❌ TTS audio generation failed:", e)
+        audio_url = None
+    return jsonify({"reply": reply, "audio_url": audio_url})
+
+@app.route("/audio/<filename>")
+def audio(filename):
+    return send_from_directory(AUDIO_DIR, filename)
 
 @app.route("/history")
 def history():
@@ -44,4 +62,4 @@ def stop_chat():
     return jsonify({"status": "stopped"})
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=8080, debug=True)
+    app.run(host='0.0.0.0', port=8080, debug=False)
