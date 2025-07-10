@@ -6,7 +6,7 @@ from eleven_tts import generate_tts_audio
 
 app = Flask(__name__)
 
-WEBHOOK_URL = "https://shaileshk.app.n8n.cloud/webhook/voicebot2"
+WEBHOOK_URL = "https://chlearx.app.n8n.cloud/webhook/voicebot2"
 chat_history = []
 listening = False
 AUDIO_DIR = "audio"
@@ -62,4 +62,4 @@ def stop_chat():
     return jsonify({"status": "stopped"})
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=8080, debug=True)
+    app.run(host='0.0.0.0', port=8080, debug=False)
