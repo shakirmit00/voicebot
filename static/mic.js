@@ -1,5 +1,6 @@
 let isListening = false;
 let chatInterval = null;
+let currentAudio = null;
 
 const startBtn = document.getElementById("startBtn");
 const stopBtn = document.getElementById("stopBtn");
@@ -23,10 +24,11 @@ function disableButtons() {
     stopBtn.disabled = false;
 }
 
-disableButtons(); // Initially only start is enabled
+enableButtons(); // Only start is enabled at first
 
 startBtn.onclick = () => {
     statusDiv.innerText = "🎤 Say 'Hi Jarvis' to start...";
+    isListening = false; // Not listening until wake word
     recognition.start();
 };
 
@@ -54,6 +56,11 @@ function stopListening() {
         chatInterval = null;
     }
     recognition.stop();
+    if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+    }
 }
 
 recognition.onresult = function (event) {
@@ -64,8 +71,9 @@ recognition.onresult = function (event) {
     if (!isListening && WAKE_WORDS.some(w => transcript.includes(w))) {
         statusDiv.innerText = "✅ Jarvis Activated!";
         startListening();
-        speak("Hello, I am Jarvis. How can I help you?");
-        setTimeout(() => recognition.start(), 1000);
+        speak("Hello, I am Jarvis. How can I help you?", () => {
+            recognition.start();
+        });
         return;
     }
     // If not listening, ignore everything except wake word
@@ -76,8 +84,7 @@ recognition.onresult = function (event) {
     }
     // Stop word detection
     if (STOP_WORDS.some(w => transcript.includes(w))) {
-        speak("Okay, stopping now.");
-        stopListening();
+        speak("Okay, stopping now.", stopListening);
         return;
     }
     statusDiv.innerText = "🤖 Thinking...";
@@ -92,16 +99,17 @@ recognition.onresult = function (event) {
         chatDiv.innerHTML += `<div><b>Jarvis:</b> ${reply}</div>`;
         // If backend provides audio_url, play it
         if (data.audio_url) {
-            const audio = new Audio(data.audio_url);
-            audio.play();
+            playAudio(data.audio_url, () => {
+                if (isListening) recognition.start();
+            });
         } else {
-            speak(reply);
+            speak(reply, () => {
+                if (isListening) recognition.start();
+            });
         }
     })
     .catch(err => {
         chatDiv.innerHTML += `<div><b>Jarvis:</b> Sorry, something went wrong.</div>`;
-    })
-    .finally(() => {
         if (isListening) setTimeout(() => recognition.start(), 1000);
     });
 };
@@ -121,7 +129,18 @@ function fetchChat() {
         });
 }
 
-function speak(text) {
+function speak(text, onend) {
     const utterance = new SpeechSynthesisUtterance(text);
+    utterance.onend = onend || null;
     speechSynthesis.speak(utterance);
+}
+
+function playAudio(url, onend) {
+    if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+    }
+    currentAudio = new Audio(url);
+    currentAudio.onended = onend || null;
+    currentAudio.play();
 }
