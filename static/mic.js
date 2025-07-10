@@ -88,4 +88,7 @@ document.addEventListener("DOMContentLoaded", function() {
         const utterance = new SpeechSynthesisUtterance(text);
         speechSynthesis.speak(utterance);
     }
+
+    window.startListening = startListening;
+    window.stopListening = stopListening;
 });
