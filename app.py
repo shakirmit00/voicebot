@@ -89,6 +89,15 @@ def history():
     return jsonify(chat_history)
 
 
+@app.route("/stop", methods=["POST"])
+def stop_chat():
+    global voice_thread_running, wake_detected, listening
+    voice_thread_running = False
+    wake_detected = False
+    listening = False
+    return jsonify({"status": "stopped"})
+
+
 if __name__ == "__main__":
     # Production-ready binding
     app.run(host='0.0.0.0', port=8080, debug=True)
