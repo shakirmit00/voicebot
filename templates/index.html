@@ -4,14 +4,23 @@
 <head>
     <title>Jarvis Voice Assistant</title>
     <script>
+        let chatInterval = null;
+
         async function startChat() {
             await fetch("/start", { method: "POST" });
             document.getElementById("status").innerText = "🎙️ Listening...";
+            if (!chatInterval) {
+                chatInterval = setInterval(refreshChat, 2000);
+            }
         }
 
         async function stopChat() {
             await fetch("/stop", { method: "POST" });
             document.getElementById("status").innerText = "🛑 Stopped";
+            if (chatInterval) {
+                clearInterval(chatInterval);
+                chatInterval = null;
+            }
         }
 
         async function refreshChat() {
@@ -26,22 +35,7 @@
             });
         }
 
-        setInterval(refreshChat, 5000);
     </script>
-	<script>
-async function fetchChat() {
-  const res = await fetch("/history");
-  const history = await res.json();
-  const chatDiv = document.getElementById("chat-log");
-  chatDiv.innerHTML = history.map(msg =>
-    `<div><b>${msg.role}:</b> ${msg.content}</div>`
-  ).join("");
-}
-
-// Fetch chat every 2 seconds
-setInterval(fetchChat, 2000);
-</script>
-
 </head>
 <body style="font-family:sans-serif">
     <h1>🧠 Jarvis Assistant </h1>
